@@ -125,33 +125,6 @@ categorical_table2[c("  -1grp", "  0grp", "  1grp" ), 2] <- round(out_cat_n$stre
 # save output 
 openxlsx::write.xlsx(list("after imp categorical" = categorical_table2, "after imp continuous" = cont_summary_pool), file = paste0("descriptives-after-imputation-", Sys.Date(),'.xlsx'), rowNames = T, overwrite=T)
 
-######################################
-##          CORRELATIONS            ##
-######################################
-# # extract 30th imputed dataset
-# dataset_30 <- complete(full_imp, 30) 
-# 
-# # convert factor to numeric
-# dataset_30$stress_group_halfsd <- as.numeric(dataset_30$stress_group_halfsd )
-# 
-# # select variable of interest
-# subset <- dataset_30[, c('emot_symp_16y', 
-#                'weighted_LE_sum', 'unweighted_LE_sum',
-#                'emot_symp_age_16y', 'PRS', 'stress_group_halfsd') ]
-# # rename
-# colnames(subset) <- c('SDQ emotional symptoms', 
-#                       'perceived impact score', 'number of LE score',
-#                       'age', 'PRS', 'stress group')
-# 
-# # correlation matrix for continuous variables
-# corr_output <- rcorr(as.matrix(subset),type="spearman")
-# corr_output[[1]][upper.tri(corr_output[[1]], diag=FALSE)] <- NA # set top triangle to NA
-# corr_output[[2]][upper.tri(corr_output[[2]], diag=FALSE)] <- NA # set top triangle to NA
-# corr_output[[3]][upper.tri(corr_output[[3]], diag=FALSE)] <- NA # set top triangle to NA
-# 
-# # save correlation matrix
-# openxlsx::write.xlsx(list(r = corr_output[[1]], n = corr_output[[2]], P = corr_output[[3]]), file = paste0("correlation-matrix-", Sys.Date(),'.xlsx'), rowNames = T, overwrite=T)
-# 
 
 ######################################
 ##          CORRELATIONS            ##

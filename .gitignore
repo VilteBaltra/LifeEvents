@@ -2,3 +2,4 @@
 no-imputation-backup
 old
 **/.DS_Store
+.gitignore 

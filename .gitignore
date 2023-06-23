@@ -1,4 +1,4 @@
 # ignore these folders
 no-imputation-backup
 old
-.DS_Store
+**/.DS_Store

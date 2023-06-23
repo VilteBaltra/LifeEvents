@@ -181,30 +181,6 @@ regr_model <- function(outcome, age_at_outcome, LE, dataset, PRS = NULL, model_n
   return(output)
 }
 
-######################################
-###     SDQ: RUN REGRESSIONS       ###
-######################################
-
-# # scale variables in dataset_clean
-# dataset_clean[, c('emot_symp_16y_z', 'smfq_17.5y_z',  'weighted_LE_mean_z',
-#                  'unweighted_LE_mean_z', 'smfq_age_17.5y_z',
-#                  'emot_symp_age_16y_z')] <- apply(dataset_clean[, c('emot_symp_16y',
-#                                                                    'smfq_17.5y',
-#                                                                    'weighted_LE_mean',
-#                                                                    'unweighted_LE_mean',
-#                                                                    'smfq_age_17.5y',
-#                                                                    'emot_symp_age_16y')],2, scale)
-# 
-# # scale variables in dataset_clean_prs
-# dataset_clean_prs[, c('emot_symp_16y_z', 'smfq_17.5y_z',  'weighted_LE_mean_z',
-#                   'unweighted_LE_mean_z', 'smfq_age_17.5y_z',
-#                   'emot_symp_age_16y_z')] <- apply(dataset_clean_prs[, c('emot_symp_16y',
-#                                                                      'smfq_17.5y',
-#                                                                      'weighted_LE_mean',
-#                                                                      'unweighted_LE_mean',
-#                                                                      'smfq_age_17.5y',
-#                                                                      'emot_symp_age_16y')],2, scale)
-
 # Running regressions 
 # The weighted and unweighted models will run slower as they include 10,000 bootstrapping
 # in PRS models (weighted_prs and unweighted_prs) bootstrapping is optional by changing BS = NULL parameter
@@ -238,40 +214,5 @@ unweighted_prs <- regr_model(outcome='emot_symp_16y',
                              PRS = TRUE,
                              model_name = 'prs_mean_unweighted_SDQ_',
                              BS = NULL) # if bootstrapp is set to TRUE, 10,000 BS will be run and ethnicity covar will be removed
-
-# ######################################
-# ###    SMFQ: RUN REGRESSIONS      ###
-# ######################################
-# # outcome = smfq_17.5y
-# # age = smfq_age_17.5y
-# 
-# weighted_smfq <- regr_model(outcome='smfq_17.5y', 
-#                             age_at_outcome='smfq_age_17.5y_z', 
-#                             LE='weighted_LE_mean_z', 
-#                             dataset=dataset_clean, 
-#                             PRS = FALSE,
-#                             model_name = 'weighted_SMFQ_')
-# 
-# 
-# unweighted_smfq <- regr_model(outcome='smfq_17.5y', 
-#                               age_at_outcome='smfq_age_17.5y_z', 
-#                               LE='unweighted_LE_mean_z', 
-#                               dataset=dataset_clean, 
-#                               PRS = FALSE,
-#                               model_name = 'unweighted_SMFQ_')
-# 
-# weighted_prs_smfq <- regr_model(outcome='smfq_17.5y', 
-#                                 age_at_outcome='smfq_age_17.5y_z', 
-#                                 LE='weighted_LE_mean_z', 
-#                                 dataset=dataset_clean_prs, 
-#                                 PRS = TRUE,
-#                                 model_name = 'prs_weighted_SMFQ_')
-# 
-# unweighted_prs_smfq <- regr_model(outcome='smfq_17.5y', 
-#                                   age_at_outcome='smfq_age_17.5y_z', 
-#                                   LE='unweighted_LE_mean_z', 
-#                                   dataset=dataset_clean_prs, 
-#                                   PRS = TRUE,
-#                                   model_name = 'prs_unweighted_SMFQ_')
 
 ########### end script ################

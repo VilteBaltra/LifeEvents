@@ -8,8 +8,6 @@ library(mice)
 library(miceadds)
 library(openxlsx)
 library(psych)
-library(corrplot)
-library(Hmisc)
 
 # define data path
 data_path = "/Volumes/Files/Psychology/ResearchProjects/Ewalton/EarlyCause/WP4/LifeEvents/neuroticism-2023-03-30/"
@@ -103,10 +101,18 @@ binary <- impdat[, c(".imp", "sex", "ethnicity", "mum_uni")] #  "stress_group_ha
 binary_summary <- with(binary, by(binary, .imp, function(x) sapply(x[, -c(1)], table))) # exclude .imp
 out_bin_n <- as.data.frame(round(Reduce("+",binary_summary)/length(binary_summary),2))
 
-# catgeorical vars 
-cate <- impdat[, c(".imp", "stress_group_halfsd", "stress_group_onesd")]
-cat_summary <- with(cate, by(cate, .imp, function(x) sapply(x[, -c(1)], table)))# exclude .imp
-out_cat_n <- as.data.frame(round(Reduce("+",cat_summary)/length(cat_summary),2))
+# categorical vars 
+cate <- impdat[, c(".imp", "stress_group_halfsd", "stress_group_onesd")] # because stress subgroups were defined using 30th dataset, stress_group_halfsd descriptives sligthly differ here from what is presented in descriptive table
+
+for(i in unique(impdat$cidB2957)) { # for each individual obtain the mean stress_group_halfsd value across all imputed datasets 
+  individual_values <- impdat[impdat$cidB2957 == i, c(".imp", "cidB2957", "stress_group_halfsd", "stress_group_onesd")]
+  impdat$stress_group_halfsd_mean[impdat$cidB2957 == i] <- round(mean(as.numeric(individual_values$stress_group_halfsd), na.rm=T),0)
+  impdat$stress_group_onesd_mean[impdat$cidB2957 == i] <- round(mean(as.numeric(individual_values$stress_group_onesd), na.rm=T),0)
+}
+# store as a dataframe
+out_cat_n <- as.data.frame(cbind(stress_group_halfsd = table(impdat$stress_group_halfsd_mean) / 30, # divide by number of imputed datsets
+                           stress_group_onesd = table(impdat$stress_group_onesd_mean) / 30))
+rownames(out_cat_n) <- c("-1", "0",  "1") # name rows
 
 # format table after imp
 categorical_table2 <- categorical_table
@@ -125,6 +131,11 @@ categorical_table2[c("  -1grp", "  0grp", "  1grp" ), 2] <- round(out_cat_n$stre
 # save output 
 openxlsx::write.xlsx(list("after imp categorical" = categorical_table2, "after imp continuous" = cont_summary_pool), file = paste0("descriptives-after-imputation-", Sys.Date(),'.xlsx'), rowNames = T, overwrite=T)
 
+# number of unweighted LE per stress group
+impdat %>% dplyr::group_by(stress_group_halfsd_mean) %>% dplyr::summarize(mean_unweighted_LE_sum = mean(unweighted_LE_sum), sd_unweighted_LE_sum = sd(unweighted_LE_sum))
+ggplot(impdat, aes(x = as.factor(stress_group_halfsd_mean), y = unweighted_LE_sum)) +
+  geom_boxplot() +
+  labs(x = "Stress Reactivity", y = "Number of Life Events", title = "Box Plot of Number of Life Events by Stress Reactivity")
 
 ######################################
 ##          CORRELATIONS            ##
@@ -146,15 +157,35 @@ s1 <- merge(test[[1]], test[[2]], by = "NA", all = TRUE)
 s2 <- merge(s1, test[[3]], by = "NA", all = TRUE)
 s3 <- merge(s2, test[[4]], by = "NA", all = TRUE)
 s4 <- merge(s3, test[[5]], by = "NA", all = TRUE)
-final <- s4 %>% select(c('NA', final$'NA')) # order rows and columns to be the same
+final <- s4 %>% select(c('NA', s4$'NA')) # order rows and columns to be the same
 final[, 2:ncol(final)] <- apply(final[, 2:ncol(final)], 2, function(column) as.numeric(column, 2)) # convert to numeric
 final_rounded <- apply(final[, 2:ncol(final)], 2, function(column) round(column, 3)) # round
 diag(final_rounded) <- 1 # set diagonal to 1
 final_rounded[upper.tri(final_rounded, diag=FALSE)] <- NA # set top triangle to NA
 rownames(final_rounded) <- final[,1] # final tidy corr matrix
 
+# save as above but for p values
+# initiate empty df and select only p column 
+test2 <- list()
+for(name in vars){
+  test2[[name]] <- imp_correlations %>% filter(variable1 == name) %>% select(variable2, p)
+  colnames(test2[[name]]) <- c("NA", name)
+}
+
+# merge all r columns into a correlation matrix
+s1 <- merge(test2[[1]], test2[[2]], by = "NA", all = TRUE)
+s2 <- merge(s1, test2[[3]], by = "NA", all = TRUE)
+s3 <- merge(s2, test2[[4]], by = "NA", all = TRUE)
+s4 <- merge(s3, test2[[5]], by = "NA", all = TRUE)
+final <- s4 %>% select(c('NA', s4$'NA')) # order rows and columns to be the same
+final[, 2:ncol(final)] <- apply(final[, 2:ncol(final)], 2, function(column) as.numeric(column, 2)) # convert to numeric
+pvalues_rounded <- apply(final[, 2:ncol(final)], 2, function(column) round(column, 3)) # round
+diag(pvalues_rounded) <- 1 # set diagonal to 1
+pvalues_rounded[upper.tri(pvalues_rounded, diag=FALSE)] <- NA # set top triangle to NA
+rownames(pvalues_rounded) <- final[,1] # final tidy corr matrix
+
 # save correlation matrix
-openxlsx::write.xlsx(as.data.frame(final_rounded), file = paste0("correlation-matrix-after-imp-", Sys.Date(),'.xlsx'), rowNames = T, overwrite=T)
+openxlsx::write.xlsx(list("r" = as.data.frame(final_rounded), "p" = as.data.frame(pvalues_rounded)), file = paste0("correlation-matrix-after-imp-", Sys.Date(),'.xlsx'), rowNames = T, overwrite=T)
 
 ########### end script ################
 

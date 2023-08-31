@@ -46,12 +46,12 @@ no_imputation <- c('percent_missing_le_unweighted', 'percent_missing_le_weighted
 # didn't include 'twin' and 'sibling' as already excluded twins + siblings, so that only one related individual per pair remains (twin = all A, sibling = all 0)
 
 # add auxilary variables to help with imputation 
-aux <- c('ACEscore_extended_0_16yrs', 'ACEcat_extended_0_16yrs', 'physical_illness_parent_0_16yrs',
-         'physical_illness_child_0_16yrs', 'vlnc_btwn_chld_nd_prtnr_0_16yrs', 'social_support_parent_0_16yrs',
+aux <- c('ACEscore_extended_0_16yrs', 'physical_illness_parent_0_16yrs',
+         'physical_illness_child_0_16yrs', 'vlnc_btwn_chld_nd_prtnr_0_16yrs',
          'neighbourhood_0_16yrs', 'financial_difficulties_0_16yrs', 'social_class_0_16yrs', 'parental_separation_0_16yrs',
-         'parent_convicted_offenc_0_16yrs', 'mentl_hlth_prblms_r_scd_0_16yrs', 'substance_household_0_16yrs', 
-         'violence_between_parnts_0_16yrs', 'parent_child_bond_0_16yrs', 'bullying_0_16yrs', 'emotional_neglect_0_16yrs',
-         'emotional_abuse_0_16yrs', 'sexual_abuse_0_16yrs', 'physical_abuse_0_16yrs',
+         'parent_convicted_offenc_0_16yrs', 'mentl_hlth_prblms_r_scd_0_16yrs',
+         'parent_child_bond_0_16yrs', 'bullying_0_16yrs', 'emotional_neglect_0_16yrs',
+         'emotional_abuse_0_16yrs', 'physical_abuse_0_16yrs',
          'mz028b',  # maternal age at intake (used for imputation) 
          'dw043', # maternal bmi
          'pub803',	# child's height (cm) at 16y
@@ -61,9 +61,6 @@ aux <- c('ACEscore_extended_0_16yrs', 'ACEcat_extended_0_16yrs', 'physical_illne
          'bestgest', # # gestational age at birth (used for imputation)
          'kz030', # gestational weight (used for imputation)
          'b032',  # parity (used for imputation)
-         'smfq_17.5y',
-         'smfq_age_17.5y',
-         'fh6878', # generalised anxiety disorder 15y 6m
          'fh6877', # any anxiety disorder
          'fh6870', # any adhd disorder
          'fh6872'  # any behavioural disorder
@@ -71,6 +68,13 @@ aux <- c('ACEscore_extended_0_16yrs', 'ACEcat_extended_0_16yrs', 'physical_illne
 
 dataset_for_imp <- dataset_clean[, c('cidB2957', le_weighted, le_unweighted, exposures,  outcome, covariates, no_imputation, aux)]
 
+# select only numeric variables using subsetting
+numeric_vars <- dataset_for_imp[, sapply(dataset_for_imp, is.numeric)]
+cor_matrix <- as.data.frame(cor(numeric_vars, use = "complete.obs"))
+# save correlation matrix 
+pdf("cor-matrix.pdf", width = 14, height = 14)
+pheatmap::pheatmap(cor_matrix, cluster_rows = F, cluster_cols = F)
+dev.off()
 
 ######################################
 ###        IMPUTATION MODEL        ###
@@ -173,7 +177,7 @@ imp_datlist <- miceadds::mids2datlist(imp)
 
 # Standardize variables
 sdatlist <- miceadds::scale_datlist(imp_datlist, orig_var = c('weighted_LE_sum', 'unweighted_LE_sum', 'weighted_LE_mean_imp',
-                                                               'unweighted_LE_mean_imp', 'emot_symp_16y', 'emot_symp_age_16y'), 
+                                                              'unweighted_LE_mean_imp', 'emot_symp_16y', 'emot_symp_age_16y'), 
                                     trafo_var = paste0( c('weighted_LE_sum', 'unweighted_LE_sum', 'weighted_LE_mean_imp',
                                                           'unweighted_LE_mean_imp', 'emot_symp_16y', 'emot_symp_age_16y'), "_z") )
 

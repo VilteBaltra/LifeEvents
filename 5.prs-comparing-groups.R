@@ -27,17 +27,28 @@ format.multinomial <- function(model){
   return(output)
 }
 
-# half SD
+# half SD - low sensitivity as reference
 set.seed(2023)
-multinom_model <- with(full_imp, multinom(relevel(stress_group_halfsd, ref=3) ~ scale(PRS) + emot_symp_age_16y + sex + ethnicity + mum_uni))
-out <- format.multinomial(multinom_model)
-# one SD
+multinom_model <- with(full_imp, multinom(relevel(stress_group_halfsd, ref=1) ~ scale(PRS) + emot_symp_age_16y + sex + ethnicity + mum_uni))
+out1 <- format.multinomial(multinom_model)
+
+# half SD - typical sensitivity as reference
 set.seed(2023)
-multinom_model2 <- with(full_imp, multinom(relevel(stress_group_onesd, ref=3) ~ scale(PRS) + emot_symp_age_16y + sex + ethnicity + mum_uni))
-out2 <- format.multinomial(multinom_model2)
+multinom_model <- with(full_imp, multinom(relevel(stress_group_halfsd, ref=2) ~ scale(PRS) + emot_symp_age_16y + sex + ethnicity + mum_uni))
+out2 <- format.multinomial(multinom_model)
+
+# one SD - low sensitivity as reference
+set.seed(2023)
+multinom_model2 <- with(full_imp, multinom(relevel(stress_group_onesd, ref=1) ~ scale(PRS) + emot_symp_age_16y + sex + ethnicity + mum_uni))
+out3 <- format.multinomial(multinom_model2)
+
+# one SD - typical sensitivity as reference
+set.seed(2023)
+multinom_model2 <- with(full_imp, multinom(relevel(stress_group_onesd, ref=2) ~ scale(PRS) + emot_symp_age_16y + sex + ethnicity + mum_uni))
+out4 <- format.multinomial(multinom_model2)
 
 # save output
-openxlsx::write.xlsx(list('halfsd' = out, 'onesd' = out2), file = paste0("multinomial-results-prs-stress-groups-", Sys.Date(),'.xlsx'), rowNames = F, overwrite=T)
+openxlsx::write.xlsx(list('halfsd1' = out1, 'halfsd2' = out2, 'onesd1' = out3, 'onesd2' = out4), file = paste0("multinomial-results-prs-stress-groups-", Sys.Date(),'.xlsx'), rowNames = F, overwrite=T)
 
 
 ############## end script #################

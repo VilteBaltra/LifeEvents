@@ -1,0 +1,35 @@
+### Neuroticism PRS ###
+
+# set up environment
+source /apps/build/easy_build/scripts/id_instance.sh
+source /apps/build/easy_build/scripts/setup_modules.sh
+
+# load modules
+module purge
+export INSTANCE=fsv2
+module load R/4.0.0-foss-2020a 
+
+# set paths
+DIR= path to genetic QC'd data (target data)
+BASE= path to base data
+
+# 'alspac.covariate' contains age at outcome, sex, and 10 genetic PCs
+# 'alspac.emot_symp_16y' contains SDQ emotional symptoms outcome (due to a lack of a good neuroticism measure)
+
+./PRSice_linux \\\
+    --base $BASE/sumstats_neuroticism_ctg_format.txt.gz \
+    --target $DIR/ALSPAC_QC_CHR1to22,$DIR/ALSPAC_QC_CHR1to22.sample \
+    --type bgen \
+    --id-delim "_" \
+    --allow-inter \
+    --extract $BASE/neuroticism-alspac.valid \
+    --binary-target F \
+    --pheno $BASE/alspac.emot_symp_16y \
+    --cov $BASE/alspac.covariate \
+    --base-maf MAF:0.01 \
+    --base-info INFO:0.8 \
+    --stat Z \
+    --snp RSID \
+    --beta T \
+    --thread 20 \
+    --out $BASE/prs.neuroticism.SDQoutcome 

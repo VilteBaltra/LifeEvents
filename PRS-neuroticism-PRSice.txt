@@ -16,7 +16,7 @@ BASE= path to base data
 # 'alspac.covariate' contains age at outcome, sex, and 10 genetic PCs
 # 'alspac.emot_symp_16y' contains SDQ emotional symptoms outcome (due to a lack of a good neuroticism measure)
 
-./PRSice_linux \\\
+./PRSice_linux \
     --base $BASE/sumstats_neuroticism_ctg_format.txt.gz \
     --target $DIR/ALSPAC_QC_CHR1to22,$DIR/ALSPAC_QC_CHR1to22.sample \
     --type bgen \

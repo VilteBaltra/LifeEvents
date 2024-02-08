@@ -11,8 +11,8 @@ library(lares) # for corr_var
 library(gridExtra) # for ggsave plots in grid
 
 # define data and output paths
-data_path = "/Volumes/Files/Psychology/ResearchProjects/Ewalton/EarlyCause/data/ALSPAC/"
-output_path = "/Volumes/Files/Psychology/ResearchProjects/Ewalton/EarlyCause/WP4/LifeEvents/neuroticism-2023-03-30/"
+data_path = "add path to data"
+output_path = "add path to output"
 
 # read in raw phenotypic data
 raw_data <- read.spss(paste0(data_path, 'EarlyCause_AHupdated_CIDB2957_21OCT21.sav'), use.value.labels = FALSE, to.data.frame = TRUE)
@@ -46,12 +46,32 @@ raw_data$emot_symp_16y <- raw_data$tc4025a
 # SDQ: age of study teenager at completion (months to years)
 raw_data$emot_symp_age_16y <- raw_data$tc9991a / 12
 
-## SMFQ 
-# Moods and Feelings total score at 17.5 years (child self reported)
-raw_data$smfq_17.5y <- raw_data$CCXD917
+## SMFQ 16y
+# first select SMFQ 16y items as total score not available 
+# (17 SMFQ items present, although we will use 13, see comment in line 76)
+smfq_16y_items <- c('ccs4500','ccs4501','ccs4502', 'ccs4503', 'ccs4504', 'ccs4505', 'ccs4506', 'ccs4507', 'ccs4508', 'ccs4509', 'ccs4510', 'ccs4511', 'ccs4512', 'ccs4513', 'ccs4514', 'ccs4515','ccs4516')
+summary(raw_data[, smfq_16y_items])
+# each item is rated on a 3-point scale (3 = not true, 2 = sometimes true, 1 = true)
+# total score ranges from 0 to 26. Higher scale scores = greater depressive symptoms
 
-# Age of study child at completion (months to years)
-raw_data$smfq_age_17.5y <- raw_data$CCXD006 / 12 	
+# recode so that 0 = not true, 1 = sometimes true, 2 = true
+for(item in smfq_16y_items){
+  print(item)
+  cat("before:\n")
+  print(summary(as.factor(raw_data[, item])))
+  raw_data[, item] <- raw_data[, item] - 3 # recode scale
+  raw_data[, item] <- abs(raw_data[, item])
+  cat("after:\n")
+  print(summary(as.factor(raw_data[, item])))
+}
+summary(raw_data[, smfq_16y_items])
+
+# although 16 items are available in ALSPAC, here we select 13, as only 13 items seem to be used for the Short Mood and Feelings Questionnaire in the literature
+smfq_16y_13items <- c('ccs4500','ccs4502', 'ccs4503', 'ccs4504', 'ccs4505', 'ccs4506', 'ccs4508', 'ccs4509', 'ccs4511', 'ccs4512', 'ccs4513', 'ccs4514', 'ccs4515')
+raw_data$smfq_16y_sum <- rowSums(raw_data[, smfq_16y_13items])
+
+# age of study child at completion 
+raw_data$smfq_age_16y <- raw_data$ccs9991a / 12 
 
 # item names for weighted LE scores (23 in total)
 le_weighted <- c("ccs2001", "ccs2011", "ccs2021", "ccs2031", "ccs2041","ccs2051", "ccs2061", "ccs2071", "ccs2081", "ccs2091", "ccs2101",
@@ -80,24 +100,21 @@ aux <- c('ACEscore_extended_0_16yrs', 'ACEcat_extended_0_16yrs', 'physical_illne
          'bestgest', # # gestational age at birth (used for imputation)
          'kz030', # gestational weight (used for imputation)
          'b032',  # parity (used for imputation)
-         'smfq_17.5y',
-         'smfq_age_17.5y',
          'fh6878', # generalised anxiety disorder 15y 6m
          'fh6877', # any anxiety disorder
          'fh6870', # any adhd disorder
-         'fh6872'  # any behavioural disorder
+         'fh6872',  # any behavioural disorder
+         'emot_symp_16y',
+         'emot_symp_age_16y'
          )
 
 
 # subset relevant variables
-outcomes <- c('emot_symp_16y', 'smfq_17.5y')
-covariates <- c('ethnicity', 'sex', 'mum_uni', 'emot_symp_age_16y', 'smfq_age_17.5y')
+outcome <- c('smfq_16y_sum')
+covariates <- c('ethnicity', 'sex', 'mum_uni', 'smfq_age_16y')
 other <- c('sibling', 'twin')
-dataset_full <- raw_data[, c('cidB2957', outcomes, covariates, other, le_weighted, le_unweighted, aux)]
-
-# # convert to numeric
-# dataset_full[, c(outcomes,covariates, 'sibling')] <- apply(dataset_full[, c(outcomes,covariates, 'sibling')], 2, as.numeric)
-# str(dataset_full) # check 
+dataset_full <- raw_data[, c('cidB2957', outcome, covariates, other, smfq_16y_13items, le_weighted, le_unweighted, aux)]
+# nrow = 15645 
 
 ######################################
 ### RECODE and CALCULATE LE MEAN   ###
@@ -106,81 +123,92 @@ dataset_full <- raw_data[, c('cidB2957', outcomes, covariates, other, le_weighte
 # currently in unweighted LE 1 = yes, 2 = no. In weighted LE, 1 = Very unpleasant and 5 = Very pleasant 
 # we want to reverse the coding in weighted LE + add make 0 = did not happen
 
-# Step 1: recode all weighted LE items
-dataset_full[, le_weighted] <- abs(dataset_full[, le_weighted] - 6) 
-# add 0 = did not happen (to weighted LE)
-dataset_full[,le_weighted][dataset_full[, le_unweighted] == 2 ] <- 0
-# recode unweighted LE, so that 0 = no, 1 = yes 
+# Step 1: recode all unweighted LE items
+# so that 0 = no, 1 = yes 
 dataset_full[,le_unweighted] <- abs(dataset_full[, le_unweighted] - 2) 
+# Step 2: recode all weighted LE items
+# original coding: 1=Very unpleasant,2=A bit unpleasant, 3=No effect, 4=A bit pleasant, 5=Very pleasant
+# new coding: 3=Very unpleasant,2=A bit unpleasant, 1=A bit pleasant/Very pleasant/No effect, 0=Did not happen  
+dataset_full[, le_weighted] <- dataset_full[, le_weighted] - 4 # this will create -3=Very unpleasant,-2=A bit unpleasant, -1=No effect, 0=A bit pleasant, 1=Very pleasant
+# now also collapse 0 and 1 into -1 
+for(item in le_weighted) {
+  dataset_full[, item] <- ifelse(dataset_full[, item] %in% c(0,1), -1, dataset_full[, item]) # if item is 0 or 1 conert to -1, otherwise keep as is
+}
+# now make values positive
+dataset_full[, le_weighted] <- abs(dataset_full[, le_weighted]) 
 
-# Step 2: calculate mean weighted and unweighted scores 
+# add 0 = did not happen (to weighted LE items)
+x=1991 # initialize number
+overview <- list() # and empty list (to check output)
+# print hist output to pdf
+pdf("item_before_after_plots.pdf")
+# set up layout 
+par(mfrow = c(3, 3))
+for(item in le_unweighted) {
+  count= as.character(x + 10)
+  item2 = paste0("ccs", count)
+  cat("Unweighted LE item:", item, "\n")
+  cat("Weighted LE item:", item2, "\n")
+  # plot histogram of unweighted LE
+  hist(dataset_full[, item], main = paste("Unweighted: ", item), xlab = item)
+  # plot the before plot (histogram of weighted LE)
+  hist(dataset_full[, item2], main = paste("Weighted LE before: ", item2), xlab = item2)
+  # print summary of before items
+  overview[[item]] <- summary(as.factor(dataset_full[, item]))
+  name1=paste0(item2, "_before")
+  overview[[name1]] <- summary(as.factor(dataset_full[, item2]))
+  dataset_full[, item2] <- ifelse(dataset_full[, item] == 0, 0, dataset_full[, item2]) # if unweighted LE did not happen, add 0 to weighted LE as well 
+  # plot the after plot (histogram of weighted LE)
+  hist(dataset_full[, item2], main = paste("Weighted LE after: ", item2), xlab = item2)
+  name2=paste0(item2, "_after")
+  overview[[name2]] <- summary(as.factor(dataset_full[, item2]))
+  # print summary of after item
+  x=x+10 # weighted LE items change by unit of 10
+}
+dev.off()
+# print overview
+print(overview)
+
+
+# Step 3: calculate mean weighted and unweighted scores 
 dataset_full$weighted_LE_mean <- rowMeans(dataset_full[, le_weighted], na.rm = T)  # first calculate the mean weighted LE score
 dataset_full$unweighted_LE_mean <- rowMeans(dataset_full[, le_unweighted], na.rm = T)  # and mean unweighted LE score
+
+
+######################################
+###       SUBSET ON SMFQ           ###
+######################################
+# copy to sub dataset
+dataset_full_sub <- dataset_full
+
+# # filter based on 99% missingness
+# dataset_full_sub$percent_missing_smfq <- rowSums(is.na(dataset_full_sub[, smfq_16y_13items])) / length(smfq_16y_13items) * 100
+# dataset_full_sub <- dataset_full_sub %>% filter(percent_missing_smfq < 99) 
+# # 5098 responded to at least 1 SMFQ item
+
+# filter based on 50% missingness
+dataset_full_sub$percent_missing_smfq <- rowSums(is.na(dataset_full_sub[, smfq_16y_13items])) / length(smfq_16y_13items) * 100
+dataset_full_sub <- dataset_full_sub %>%  filter(percent_missing_smfq < 50) 
+# 5095
+
+######################################
+###       SUBSET ON LIFE EVENTS    ###
+######################################
+#  calculate percent missing in LE items 
+dataset_full_sub$percent_missing_le_unweighted <- rowSums(is.na(dataset_full_sub[, le_unweighted])) / length(le_unweighted) * 100
+dataset_full_sub$percent_missing_le_weighted <- rowSums(is.na(dataset_full_sub[, le_weighted])) / length(le_weighted) * 100
+# remove individuals with > 50% missingness in unweighted LE
+dataset_full_sub <- dataset_full_sub %>%  filter(percent_missing_le_unweighted < 50) 
+# 5,058 individuals with under 50% missingness in LE items
+
 
 ######################################
 ###       REMOVE SIBLINGS          ###
 ######################################
 # remove siblings and second born twins
-dataset_full <- dataset_full %>% filter(sibling %in% c(0, NA)) # removes siblings but keeps NA (15,090)
-dataset_full <- dataset_full %>% filter(twin == "A  ") # only keeps first born twin (14,897)
-# 15,645 individuals in raw data and 14,897 after removing siblings and twins
-
-######################################
-###       SUBSET ON SDQ            ###
-######################################
-# only keep individuals that have the outcome available
-dataset_full_sub <- dataset_full %>% filter(!is.na(emot_symp_16y)) # 5,356 individuals with outcome 
-
-#  calculate percent missing in LE items 
-dataset_full_sub$percent_missing_le_unweighted <- rowSums(is.na(dataset_full_sub[, le_unweighted])) / length(le_unweighted) * 100
-dataset_full_sub$percent_missing_le_weighted <- rowSums(is.na(dataset_full_sub[, le_weighted])) / length(le_weighted) * 100
-# remove individuals with > 50% missingness in unweighted LE
-dataset_miss <- dataset_full_sub %>%  filter(percent_missing_le_unweighted < 50) # 3,926 individuals with under 50% missingness in LE items
-
-######################################
-###       IMPOSSIBLE VALUES        ###
-######################################
-
-# PART 1: change impossible values
-# Identify rows with only NAs or 0s
-only_na_0_rows <- apply(dataset_miss[, le_unweighted], 1, function(row) all(is.na(row) | row == 0))
-data_subset_na_0_LE <- dataset_miss[only_na_0_rows,]
-
-# Find rows with values outside of NA and 0
-outside_values_rows <- apply(data_subset_na_0_LE[, le_weighted], 1, function(row) any(!is.na(row) & row != 0))
-
-# Print the rows with values outside of NA and 0
-data_subset_na_0_LE[outside_values_rows, ] 
-# there are 5 individuals with unweighted_LE_mean = 0 but with > 0 score in weighted_LE_mean 
-
-# set weighted_LE_mean for these 5 individuals to 0 (because according to unweighted_LE_mean, LE were not experienced) 
-IDs_5_individuals <- data_subset_na_0_LE[outside_values_rows, ]$cidB2957
-dataset_miss[dataset_miss$cidB2957 %in% IDs_5_individuals, "weighted_LE_mean"] <- 0
-
-# check if weighted_LE_mean for the 5 individuals is now 0 
-dataset_miss[dataset_miss$cidB2957 %in% IDs_5_individuals ,  c('cidB2957', 'weighted_LE_mean', 'unweighted_LE_mean')] # yes, it is
-
-# PART 2: remove individuals with impossible values
-# there are 54 individuals that had weighted_LE_mean = 0 (0 = none of the events took place) but unweighted_LE_mean was > 0 (which means some events did happen)
-subset_54 <- dataset_miss %>% filter(weighted_LE_mean == 0 & unweighted_LE_mean != 0 )
-IDs_to_remove <- subset_54$cidB2957
-dataset_clean <- dataset_miss %>% filter(!cidB2957 %in% IDs_to_remove)
-dim(dataset_clean) # 3,872 individuals remain (was 3,926)
-
-
-######################################
-###            ADD PRS             ###
-######################################
-
-# # scale variables
-# dataset_clean[, c('emot_symp_16y_z', 'smfq_17.5y_z',  'weighted_LE_mean_z', 
-#                  'unweighted_LE_mean_z', 'smfq_age_17.5y_z', 
-#                  'emot_symp_age_16y_z')] <- apply(dataset_clean[, c('emot_symp_16y', 
-#                                                                    'smfq_17.5y',
-#                                                                    'weighted_LE_mean',
-#                                                                    'unweighted_LE_mean',
-#                                                                    'smfq_age_17.5y',
-#                                                                    'emot_symp_age_16y')],2, scale)
+dataset_full_sub <- dataset_full_sub %>% filter(sibling %in% c(0, NA)) # removes siblings but keeps NA (4,831 left [107 siblings removed])
+dataset_clean <- dataset_full_sub %>% filter(twin == "A  ") # only keeps first born twin (4,791 left [40 twins removed])
+# 4,791 individuals left 
 
 # convert sex, mum_uni and ethnicity to factor                                                                                    
 dataset_clean$sex <- as.factor(dataset_clean$sex)
@@ -188,15 +216,15 @@ dataset_clean$ethnicity <- as.factor(dataset_clean$ethnicity)
 dataset_clean$mum_uni <- as.factor(dataset_clean$mum_uni)
 
 # read in PRS for neuroticism (calculated using SDQ outcome)
-prs <- read.table(paste0(output_path, "prs.neuroticism.SDQoutcome.best"), header=T)
+prs <- read.table(paste0(output_path, "prs.neuroticism.SMFQoutcome.best"), header=T)
 dataset_clean_prs = dataset_clean 
 dataset_clean_prs$IID <- paste0(dataset_clean$cidB2957, dataset_clean$twin) 
 dataset_clean_prs$IID <- gsub("  ", "", dataset_clean_prs$IID) # remove spaces 
-dataset_clean_prs <- merge(dataset_clean_prs, prs, by = "IID") # 2,914 with PRS
+dataset_clean_prs <- merge(dataset_clean_prs, prs, by = "IID") # 3,378 with PRS
 dataset_clean_prs$PRS_z <- scale(dataset_clean_prs$PRS) # standardise
 
-# dataset version for 3,872 individuals without PRS = dataset_clean
-# dataset version for 2,874 individuals with PRS = dataset_clean_prs
+# dataset version for 4,791 individuals without PRS = dataset_clean
+# dataset version for 3,443 individuals with PRS = dataset_clean_prs
 
 
 ######################################

@@ -9,11 +9,11 @@ library(gridExtra) # for ggsave plots in grid
 library(tidyverse)
 
 # define data path
-output_path = "/Volumes/Files/Psychology/ResearchProjects/Ewalton/EarlyCause/WP4/LifeEvents/neuroticism-2023-03-30/"
+output_path = "path to output"
 
 # read in formatted data (obtained with '0.data-prep.R' script)
-dataset_clean <- readRDS(paste0(output_path, 'dataset_clean_LE_2023-06-13.rds')) # read in ALSPAC data with selected variables
-dim(dataset_clean) # 3872    95
+dataset_clean <- readRDS(paste0(output_path, 'dataset_clean_LE_2023-12-13.rds')) # read in ALSPAC data with selected variables
+dim(dataset_clean) # 4791  107
 
 ######################################
 ###      PLOT TOP CORRELATIONS     ###

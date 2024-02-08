@@ -9,12 +9,12 @@ library(tidyverse)
 library(openxlsx)
 
 # define data path
-data_path = "/Volumes/Files/Psychology/ResearchProjects/Ewalton/EarlyCause/WP4/LifeEvents/neuroticism-2023-03-30/"
+data_path = "path to data"
 
 # read in formatted data (obtained with '0.data-prep.R' script)
-dataset_clean <- readRDS(paste0(data_path, 'dataset_clean_LE_2023-06-13.rds')) # read in ALSPAC data with selected variables
-dataset_clean_prs <- readRDS(paste0(data_path, "dataset_withPRS_LE_2023-06-13.rds" )) # read in ALSPAC data with selected variables
-dim(dataset_clean) # 3872    67
+dataset_clean <- readRDS(paste0(data_path, 'dataset_clean_LE_2023-12-13.rds')) # read in ALSPAC data with selected variables
+dataset_clean_prs <- readRDS(paste0(data_path, "dataset_withPRS_LE_2023-12-13.rds" )) # read in ALSPAC data with selected variables
+dim(dataset_clean) # 4791  107
 
 ######################################
 ###   DEFINE REGRESSION FUNCTION   ###
@@ -185,34 +185,34 @@ regr_model <- function(outcome, age_at_outcome, LE, dataset, PRS = NULL, model_n
 # The weighted and unweighted models will run slower as they include 10,000 bootstrapping
 # in PRS models (weighted_prs and unweighted_prs) bootstrapping is optional by changing BS = NULL parameter
 # if BS = TRUE, then PRS models will remove 'ethnicity' covar as it has too few non-White individuals
-weighted <- regr_model(outcome='emot_symp_16y', 
-                       age_at_outcome='emot_symp_age_16y', 
+weighted <- regr_model(outcome='smfq_16y_sum', 
+                       age_at_outcome='smfq_age_16y', 
                        LE='weighted_LE_mean', 
                        dataset=dataset_clean, 
                        PRS = FALSE,
-                       model_name = 'mean_weighted_SDQ_')
+                       model_name = 'mean_weighted_SMFQ_')
 
-unweighted <- regr_model(outcome='emot_symp_16y', 
-                         age_at_outcome='emot_symp_age_16y', 
+unweighted <- regr_model(outcome='smfq_16y_sum', 
+                         age_at_outcome='smfq_age_16y', 
                          LE='unweighted_LE_mean', 
                          dataset=dataset_clean, 
                          PRS = FALSE,
-                         model_name = 'mean_unweighted_SDQ_')
+                         model_name = 'mean_unweighted_SMFQ_')
 
-weighted_prs <- regr_model(outcome='emot_symp_16y', 
-                           age_at_outcome='emot_symp_age_16y', 
+weighted_prs <- regr_model(outcome='smfq_16y_sum', 
+                           age_at_outcome='smfq_age_16y', 
                            LE='weighted_LE_mean', 
                            dataset=dataset_clean_prs, 
                            PRS = TRUE,
-                           model_name = 'prs_mean_weighted_SDQ_',
-                           BS = NULL) # if bootstrapp is set to TRUE, 10,000 BS will be run and ethnicity covar will be removed
+                           model_name = 'prs_mean_weighted_SMFQ_',
+                           BS = TRUE) # if bootstrapp is set to TRUE, 10,000 BS will be run and ethnicity covar will be removed
 
-unweighted_prs <- regr_model(outcome='emot_symp_16y', 
-                             age_at_outcome='emot_symp_age_16y', 
+unweighted_prs <- regr_model(outcome='smfq_16y_sum', 
+                             age_at_outcome='smfq_age_16y', 
                              LE='unweighted_LE_mean', 
                              dataset=dataset_clean_prs, 
                              PRS = TRUE,
-                             model_name = 'prs_mean_unweighted_SDQ_',
-                             BS = NULL) # if bootstrapp is set to TRUE, 10,000 BS will be run and ethnicity covar will be removed
+                             model_name = 'prs_mean_unweighted_SMFQ_',
+                             BS = TRUE) # if bootstrapp is set to TRUE, 10,000 BS will be run and ethnicity covar will be removed
 
 ########### end script ################

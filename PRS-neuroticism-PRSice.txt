@@ -10,12 +10,29 @@ export INSTANCE=fsv2
 module load R/4.0.0-foss-2020a 
 
 # set paths
-DIR= path to genetic QC'd data (target data)
-BASE= path to base data
+#DIR= path to genetic QC'd data (target data)
+#BASE= path to base data
 
-# 'alspac.covariate' contains age at outcome, sex, and 10 genetic PCs
-# 'alspac.emot_symp_16y' contains SDQ emotional symptoms outcome (due to a lack of a good neuroticism measure)
+# in R
+library(mice)
+library(dplyr)
+imp <- readRDS("LE_imputation_list_with_z_prs.rds")
+original_data <- complete(imp, 0)
+original_data$IID <- paste0(original_data$cidB2957, "A") # add A for IID
 
+# read in PCs
+pcs <- read.delim("data_chr1to22_maf01_hwe1e6_geno01dosage_noindels_10PCs_141221.eigenvec")
+original_data2 <- merge(original_data, pcs, by = 'IID')
+covars <- original_data2 %>% select(FID, IID, smfq_age_16y, sex, PC1, PC2, PC3, PC4, PC5, PC6, PC7, PC8, PC9, PC10)
+pheno <- original_data2 %>% select(FID, IID, smfq_16y_sum)
+# save covariates and pheno files
+write.table(covars, file="alspac-smfq.covariates", quote=F, row.name=F)
+write.table(pheno, file="alspac-smfq.pheno", quote=F, row.name=F)
+
+# 'alspac-smfq.covariates' contains age at outcome, sex, and 10 genetic PCs
+# 'alspac-smfq.pheno' contains SMFQ outcome (due to a lack of a good neuroticism measure)
+
+# run PRSice
 ./PRSice_linux \
     --base $BASE/sumstats_neuroticism_ctg_format.txt.gz \
     --target $DIR/ALSPAC_QC_CHR1to22,$DIR/ALSPAC_QC_CHR1to22.sample \
@@ -24,12 +41,38 @@ BASE= path to base data
     --allow-inter \
     --extract $BASE/neuroticism-alspac.valid \
     --binary-target F \
-    --pheno $BASE/alspac.emot_symp_16y \
-    --cov $BASE/alspac.covariate \
+    --pheno $BASE/alspac-smfq.pheno \
+    --cov $BASE/alspac-smfq.covariates \
     --base-maf MAF:0.01 \
     --base-info INFO:0.8 \
     --stat Z \
     --snp RSID \
     --beta T \
-    --thread 20 \
-    --out $BASE/prs.neuroticism.SDQoutcome 
+    --thread 40 \
+    --out $BASE/prs.neuroticism.SMFQoutcome 
+
+
+# plot only (includes strata)
+Rscript my_PRSice.R --dir . \
+    --base $BASE/sumstats_neuroticism_ctg_format.txt.gz \
+    --target $DIR/ALSPAC_QC_CHR1to22,$DIR/ALSPAC_QC_CHR1to22.sample \
+    --type bgen \
+    --id-delim "_" \
+    --allow-inter \
+    --extract $BASE/neuroticism-alspac.valid \
+    --binary-target F \
+    --pheno $BASE/alspac-smfq.pheno \
+    --cov $BASE/alspac-smfq.covariates \
+    --base-maf MAF:0.01 \
+    --base-info INFO:0.8 \
+    --stat Z \
+    --snp RSID \
+    --beta T \
+    --thread 40 \
+    --out $BASE/prs.neuroticism.SMFQoutcome \
+    --plot \
+    --bar-levels 5e-08,0.0005,0.005,0.05,0.1,0.2,0.3,0.4,0.5,1 \
+    --quantile 100 \
+    --quant-break 1,5,10,20,40,60,80,90,95,99,100 \
+    --quant-ref 60
+

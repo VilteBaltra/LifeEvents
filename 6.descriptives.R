@@ -10,7 +10,7 @@ library(openxlsx)
 library(psych)
 
 # define data path
-data_path = "/Volumes/Files/Psychology/ResearchProjects/Ewalton/EarlyCause/WP4/LifeEvents/neuroticism-2023-03-30/"
+data_path =  "path to data"
 
 # read in imputed data (obtained with '4.life-events-interaction.R' script)
 full_imp <- readRDS(file.path(data_path,'LE_imputation_list_with_z_prs_stress_groups.rds'))
@@ -26,9 +26,9 @@ original$PRS_z <- scale(original$PRS) # standardise PRS as standardised version 
 ## BEFORE IMPUTATION
 # continuous variables
 # weighted_LE_mean and unweighted_LE_mean were calculated prior to imputation
-cont_before <- psych::describe(original[, c('emot_symp_16y', 
-                                     'weighted_LE_mean', 'unweighted_LE_mean', # do not include 'weighted_LE_sum', 'unweighted_LE_sum' as these were obtain after imp
-                                     'emot_symp_age_16y', 'PRS_z',
+cont_before <- psych::describe(original[, c('smfq_16y_sum_imp', 
+                                     'weighted_LE_sum', 'unweighted_LE_sum', 
+                                     'smfq_age_16y', 'PRS_z',
                                      'percent_missing_le_unweighted', 'percent_missing_le_weighted') ])
 print(cont_before)
 
@@ -89,9 +89,9 @@ impdat <- complete(full_imp, action="long", include = FALSE)
 
 # Pool descriptives
 # continuous vars
-cont <- impdat[, c('.imp', '.id', 'emot_symp_16y', 
+cont <- impdat[, c('.imp', '.id', 'smfq_16y_sum_imp', 
                    'weighted_LE_sum', 'unweighted_LE_sum', 'weighted_LE_mean_imp', 'unweighted_LE_mean_imp',
-                   'emot_symp_age_16y', # no need for 'PRS_z' as was not imputed 
+                   'smfq_age_16y', # no need for 'PRS_z' as was not imputed 
                    'percent_missing_le_unweighted', 'percent_missing_le_weighted')]
 cont_summary_list <- with(cont, by(cont, .imp, function(x) psych::describe(x[, -c(1, 2)]))) # exclude .imp and .id cols
 cont_summary_pool <- round(Reduce("+",cont_summary_list)/length(cont_summary_list),2)
@@ -142,7 +142,7 @@ ggplot(impdat, aes(x = as.factor(stress_group_halfsd_mean), y = unweighted_LE_su
 ######################################
 
 # correlations using imputed dataset
-vars <- c('emot_symp_16y', 'weighted_LE_sum', 'unweighted_LE_sum', 'emot_symp_age_16y', 'PRS')
+vars <- c('smfq_16y_sum_imp', 'weighted_LE_sum', 'unweighted_LE_sum', 'smfq_age_16y', 'PRS')
 imp_correlations <- miceadds::micombine.cor(mi.res=full_imp, variables = vars, method = "spearman")
 
 # initiate empty df and select only r column 

@@ -9,13 +9,13 @@ library(tidyverse)
 library(openxlsx)
 
 # define data path
-data_path = "/Volumes/Files/Psychology/ResearchProjects/Ewalton/EarlyCause/WP4/LifeEvents/neuroticism-2023-03-30/"
+data_path = "path to data"
 
 # read in formatted data (obtained with '0.data-prep.R' script)
-dataset_clean <- readRDS(paste0(data_path, 'dataset_clean_LE_2023-06-13.rds')) # read in ALSPAC data with selected variables
-dataset_clean_prs <- readRDS(paste0(data_path, "dataset_withPRS_LE_2023-06-13.rds" )) # read in ALSPAC data with selected variables
-dim(dataset_clean) # 3872    95
-dim(dataset_clean_prs) # 2874   100
+dataset_clean <- readRDS(paste0(data_path, 'dataset_clean_LE_2023-12-13.rds')) # read in ALSPAC data with selected variables
+dataset_clean_prs <- readRDS(paste0(data_path, "dataset_withPRS_LE_2023-12-13.rds" )) # read in ALSPAC data with selected variables
+dim(dataset_clean) # 4791  107
+dim(dataset_clean_prs) # 3443  112
 
 ######################################
 ### SENSITIVITY ANLAYSIS: OUTLIERS ###
@@ -23,7 +23,7 @@ dim(dataset_clean_prs) # 2874   100
 # REMOVE OUTLIERS (with Cook’s distance greater than 3x the mean) AND RERUN REGRESSIONS
 
 # WEIGHTED - no covars
-m1_before <- lm(emot_symp_16y~weighted_LE_mean, data = dataset_clean)
+m1_before <- lm(smfq_16y_sum~weighted_LE_mean, data = dataset_clean)
 summary(m1_before)
 
 cooks_distance <- cooks.distance(m1_before)
@@ -32,12 +32,11 @@ influential_rows <- names(cooks_distance[(cooks_distance > (3 * mean(cooks_dista
 data_remove <- dataset_clean[influential_rows,]
 dataset_clean_no_outliers <- dataset_clean %>% anti_join(data_remove)
 
-m1_after <- lm(emot_symp_16y~weighted_LE_mean, data = dataset_clean_no_outliers)
+m1_after <- lm(smfq_16y_sum~weighted_LE_mean, data = dataset_clean_no_outliers)
 summary(m1_after)
 
-
 # WEIGHTED - with covars
-m2_before <- lm(emot_symp_16y~weighted_LE_mean + emot_symp_age_16y + sex + ethnicity + mum_uni, data = dataset_clean)
+m2_before <- lm(smfq_16y_sum~weighted_LE_mean + smfq_age_16y + sex + ethnicity + mum_uni, data = dataset_clean)
 summary(m2_before)
 
 cooks_distance <- cooks.distance(m2_before)
@@ -46,11 +45,11 @@ influential_rows <- names(cooks_distance[(cooks_distance > (3 * mean(cooks_dista
 data_remove <- dataset_clean[influential_rows,]
 dataset_clean_no_outliers <- dataset_clean %>% anti_join(data_remove)
 
-m2_after <- lm(emot_symp_16y~weighted_LE_mean + emot_symp_age_16y + sex + ethnicity + mum_uni, data = dataset_clean_no_outliers)
+m2_after <- lm(smfq_16y_sum~weighted_LE_mean + smfq_age_16y + sex + ethnicity + mum_uni, data = dataset_clean_no_outliers)
 summary(m2_after)
 
 # WEIGHTED - with covars and PRS
-m3_before <- lm(emot_symp_16y~weighted_LE_mean + emot_symp_age_16y + sex + ethnicity + mum_uni + PRS, data = dataset_clean_prs)
+m3_before <- lm(smfq_16y_sum~weighted_LE_mean + smfq_age_16y + sex + mum_uni + PRS_z, data = dataset_clean_prs) # no ethnicity covar as almost all white
 summary(m3_before)
 
 cooks_distance <- cooks.distance(m3_before)
@@ -59,12 +58,12 @@ influential_rows <- names(cooks_distance[(cooks_distance > (3 * mean(cooks_dista
 data_remove <- dataset_clean_prs[influential_rows,]
 dataset_clean_no_outliers <- dataset_clean_prs %>% anti_join(data_remove)
 
-m3_after <- lm(emot_symp_16y~weighted_LE_mean + emot_symp_age_16y + sex + ethnicity + mum_uni + PRS, data = dataset_clean_no_outliers)
+m3_after <- lm(smfq_16y_sum~weighted_LE_mean + smfq_age_16y + sex + mum_uni + PRS_z, data = dataset_clean_no_outliers) # no ethnicity covar as almost all white
 summary(m3_after)
 
 
 # UNWEIGHTED - no covars
-m4_before <- lm(emot_symp_16y~unweighted_LE_mean, data = dataset_clean)
+m4_before <- lm(smfq_16y_sum~unweighted_LE_mean, data = dataset_clean)
 summary(m4_before)
 
 cooks_distance <- cooks.distance(m4_before)
@@ -73,11 +72,11 @@ influential_rows <- names(cooks_distance[(cooks_distance > (3 * mean(cooks_dista
 data_remove <- dataset_clean[influential_rows,]
 dataset_clean_no_outliers <- dataset_clean %>% anti_join(data_remove)
 
-m4_after <- lm(emot_symp_16y~unweighted_LE_mean, data = dataset_clean_no_outliers)
+m4_after <- lm(smfq_16y_sum~unweighted_LE_mean, data = dataset_clean_no_outliers)
 summary(m4_after)
 
 # UNWEIGHTED - with covars
-m5_before <- lm(emot_symp_16y~unweighted_LE_mean + emot_symp_age_16y + sex + ethnicity + mum_uni, data = dataset_clean)
+m5_before <- lm(smfq_16y_sum~unweighted_LE_mean + smfq_age_16y + sex + ethnicity + mum_uni, data = dataset_clean)
 summary(m5_before)
 
 cooks_distance <- cooks.distance(m5_before)
@@ -86,11 +85,11 @@ influential_rows <- names(cooks_distance[(cooks_distance > (3 * mean(cooks_dista
 data_remove <- dataset_clean[influential_rows,]
 dataset_clean_no_outliers <- dataset_clean %>% anti_join(data_remove)
 
-m5_after <- lm(emot_symp_16y~unweighted_LE_mean + emot_symp_age_16y + sex + ethnicity + mum_uni, data = dataset_clean_no_outliers)
+m5_after <- lm(smfq_16y_sum~unweighted_LE_mean + smfq_age_16y + sex + ethnicity + mum_uni, data = dataset_clean_no_outliers)
 summary(m5_after)
 
 # UNWEIGHTED - with covars and PRS
-m6_before <- lm(emot_symp_16y~unweighted_LE_mean + emot_symp_age_16y + sex + mum_uni + scale(PRS), data = dataset_clean_prs) # no ethnicity as above
+m6_before <- lm(smfq_16y_sum~unweighted_LE_mean + smfq_age_16y + sex + mum_uni + PRS_z, data = dataset_clean_prs) # no ethnicity as above
 summary(m6_before)
 
 cooks_distance <- cooks.distance(m6_before)
@@ -99,7 +98,7 @@ influential_rows <- names(cooks_distance[(cooks_distance > (3 * mean(cooks_dista
 data_remove <- dataset_clean_prs[influential_rows,]
 dataset_clean_no_outliers <- dataset_clean_prs %>% anti_join(data_remove)
 
-m6_after <- lm(emot_symp_16y~unweighted_LE_mean + emot_symp_age_16y + sex + mum_uni + scale(PRS), data = dataset_clean_no_outliers) # no ethnicity as above
+m6_after <- lm(smfq_16y_sum~unweighted_LE_mean + smfq_age_16y + sex + mum_uni + PRS_z, data = dataset_clean_no_outliers) # no ethnicity as above
 summary(m6_after)
 
 # save models in a list 
@@ -127,6 +126,6 @@ for(i in 1:length(output)) {
 names(output_formatted) <- names(output)
 
 # save model output without outliers
-openxlsx::write.xlsx(output_formatted, file = paste0("all_SDQ_models_without_outliers_", Sys.Date(),'.xlsx'), rowNames = T, overwrite=T)
+openxlsx::write.xlsx(output_formatted, file = paste0("all_SMFQ_models_without_outliers_", Sys.Date(),'.xlsx'), rowNames = T, overwrite=T)
 
 ########### end script ################

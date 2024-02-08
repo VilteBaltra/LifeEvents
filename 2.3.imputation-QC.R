@@ -7,8 +7,8 @@
 library(mice)
 
 # define data path
-data_path = "/Volumes/Files/Psychology/ResearchProjects/Ewalton/EarlyCause/WP4/LifeEvents/neuroticism-2023-03-30/"
-output = "/Users/vb506/Documents/Projects/LifeEvents/output-230619"
+data_path = "path to data"
+output =  "path to output"
 
 # Load the list of imputed datasets
 imp <- readRDS(file.path(data_path,'LE_imputation_list.rds'))
@@ -35,9 +35,7 @@ dev.off()
 ######################################
 
 # Compare imputed and observed values
-# For loops do not work with this wacky mice function so just run the loop below 
-# and paste it: lil help
-for (var in c(le_weighted, le_unweighted, covariates, outcome)) {
+for (var in c(le_weighted, le_unweighted, covariates, smfq_16y_13items)) {
    cat(paste('densityplot(imp, ~', var, ')', '\n')) }
 
 pdf(file.path(output, "imputed-vs-observed-with-all-aux.pdf"))
@@ -90,8 +88,19 @@ densityplot(imp, ~ ccs2220 )
 densityplot(imp, ~ ethnicity ) 
 densityplot(imp, ~ sex ) 
 densityplot(imp, ~ mum_uni ) 
-#densityplot(imp, ~ emot_symp_age_16y ) # not this as no NA before imp
-#densityplot(imp, ~ emot_symp_16y ) # not this as also no NA before imp
+densityplot(imp, ~ ccs4500 ) 
+densityplot(imp, ~ ccs4502 ) 
+densityplot(imp, ~ ccs4503 ) 
+densityplot(imp, ~ ccs4504 ) 
+densityplot(imp, ~ ccs4505 ) 
+densityplot(imp, ~ ccs4506 ) 
+densityplot(imp, ~ ccs4508 ) 
+densityplot(imp, ~ ccs4509 ) 
+densityplot(imp, ~ ccs4511 ) 
+densityplot(imp, ~ ccs4512 ) 
+densityplot(imp, ~ ccs4513 ) 
+densityplot(imp, ~ ccs4514 ) 
+densityplot(imp, ~ ccs4515 ) 
 dev.off()
 
 ######################################
@@ -149,7 +158,8 @@ stripplot(imp, unweighted_LE_mean_imp )
 stripplot(imp, weighted_LE_mean_imp ) 
 stripplot(imp, unweighted_LE_sum ) 
 stripplot(imp, weighted_LE_sum ) 
-stripplot(imp, emot_symp_16y ) 
+stripplot(imp, smfq_16y_sum ) 
+stripplot(imp, smfq_age_16y ) 
 miss <- is.na(original_set[, "unweighted_LE_sum" ])
 xyplot(imp, unweighted_LE_sum ~I ( ccs2000 + ccs2010 + ccs2020 + ccs2030 + ccs2040 + ccs2050 + ccs2060 + ccs2070 + ccs2080 + ccs2090 + ccs2100 + ccs2110 + ccs2120 + ccs2130 + ccs2140 + ccs2150 + ccs2160 + ccs2170 + ccs2180 + ccs2190 + ccs2200 + ccs2210 + ccs2220 ),
        na.groups = miss, cex = c(1, 1), pch = c(1, 20), ylab = "Domain Imputed", xlab = "Domain Calculated", main = "unweighted_LE_sum") 
@@ -162,6 +172,9 @@ xyplot(imp, unweighted_LE_mean_imp ~I ( (ccs2000 + ccs2010 + ccs2020 + ccs2030 +
 miss <- is.na(original_set[, "weighted_LE_mean_imp" ])
 xyplot(imp, weighted_LE_mean_imp ~I ( (ccs2001 + ccs2011 + ccs2021 + ccs2031 + ccs2041 + ccs2051 + ccs2061 + ccs2071 + ccs2081 + ccs2091 + ccs2101 + ccs2111 + ccs2121 + ccs2131 + ccs2141 + ccs2151 + ccs2161 + ccs2171 + ccs2181 + ccs2191 + ccs2201 + ccs2211 + ccs2221)/23 ),
        na.groups = miss, cex = c(1, 1), pch = c(1, 20), ylab = "Domain Imputed", xlab = "Domain Calculated", main = "weighted_LE_mean_imp") 
+miss <- is.na(original_set[, "smfq_16y_sum_imp" ])
+xyplot(imp, smfq_16y_sum_imp ~I ( ccs4500 + ccs4502 + ccs4503 + ccs4504 + ccs4505 + ccs4506 + ccs4508 + ccs4509 + ccs4511 + ccs4512 + ccs4513 + ccs4514 + ccs4515 ),
+       na.groups = miss, cex = c(1, 1), pch = c(1, 20), ylab = "SMFQ Imputed", xlab = "SMFQ Calculated", main = "smfq_16y_sum_imp") 
 dev.off()
 
 ########### end script ################
